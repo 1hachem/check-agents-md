@@ -1,0 +1,102 @@
+name: 'Check AGENTS.md'
+description: 'Hold an AGENTS.md to rules that live: no implementation detail, no dead references.'
+author: '1hachem'
+
+branding:
+  icon: 'book-open'
+  color: 'purple'
+
+inputs:
+  checks:
+    description: 'Which checks to run: `rules`, `refs`, or both. Defaults to both.'
+    required: false
+    default: ''
+  base:
+    description: 'Judge what the branch adds on top of this ref. Defaults to the pull request base, then origin/main. Needs `fetch-depth: 0`.'
+    required: false
+    default: ''
+  all:
+    description: 'Judge every tracked AGENTS.md rather than only what the branch changed.'
+    required: false
+    default: 'false'
+  only:
+    description: 'Restrict the run to one AGENTS.md, or to everything under a directory.'
+    required: false
+    default: ''
+  filenames:
+    description: 'Space separated basenames read as agent files. Defaults to `AGENTS.md`.'
+    required: false
+    default: ''
+  ignore:
+    description: 'Newline or comma separated regular expressions; an agent file whose path matches any of them is skipped.'
+    required: false
+    default: ''
+  model:
+    description: 'Model asked to judge the prose. Defaults to `~typesafe/jev-latest`.'
+    required: false
+    default: ''
+  endpoint:
+    description: 'Provider URL it is asked through. Defaults to the OpenRouter decisions endpoint.'
+    required: false
+    default: ''
+  api-key:
+    description: 'Key for that provider. Falls back to the OPENROUTER_API_KEY variable in the environment. Only the `rules` check needs one.'
+    required: false
+    default: ''
+  jobs:
+    description: 'Blocks judged in parallel.'
+    required: false
+    default: ''
+  annotations:
+    description: 'Emit ::error and ::warning annotations so findings show up inline on the diff.'
+    required: false
+    default: 'true'
+  fail-on-violations:
+    description: 'Exit non-zero on a finding. Set false to adopt the check in warn-only mode.'
+    required: false
+    default: 'true'
+  working-directory:
+    description: 'Directory to run the check from.'
+    required: false
+    default: '.'
+
+outputs:
+  files:
+    description: 'Number of AGENTS.md examined.'
+    value: ${{ steps.check.outputs.files }}
+  blocks:
+    description: 'Number of prose blocks judged.'
+    value: ${{ steps.check.outputs.blocks }}
+  failures:
+    description: 'Number of blocks carrying implementation detail.'
+    value: ${{ steps.check.outputs.failures }}
+  warnings:
+    description: 'Number of blocks leaning towards implementation.'
+    value: ${{ steps.check.outputs.warnings }}
+  references:
+    description: 'Number of backticked references resolved.'
+    value: ${{ steps.check.outputs.references }}
+  dead-references:
+    description: 'Number of references that no longer resolve.'
+    value: ${{ steps.check.outputs['dead-references'] }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: check
+      run: node "$GITHUB_ACTION_PATH/dist/check-agents-md.cjs"
+      shell: bash
+      env:
+        INPUT_CHECKS: ${{ inputs.checks }}
+        INPUT_BASE: ${{ inputs.base }}
+        INPUT_ALL: ${{ inputs.all }}
+        INPUT_ONLY: ${{ inputs.only }}
+        INPUT_FILENAMES: ${{ inputs.filenames }}
+        INPUT_IGNORE: ${{ inputs.ignore }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_ENDPOINT: ${{ inputs.endpoint }}
+        INPUT_API_KEY: ${{ inputs.api-key }}
+        INPUT_JOBS: ${{ inputs.jobs }}
+        INPUT_ANNOTATIONS: ${{ inputs.annotations }}
+        INPUT_FAIL_ON_VIOLATIONS: ${{ inputs.fail-on-violations }}
+        INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}

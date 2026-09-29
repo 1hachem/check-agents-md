@@ -1,0 +1,39 @@
+name: AGENTS.md
+
+on:
+  pull_request:
+    paths: ['AGENTS.md', '**/AGENTS.md']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agents-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  references:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./
+        with:
+          checks: 'refs'
+
+  rules:
+    runs-on: ubuntu-latest
+    env:
+      KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - if: env.KEY == ''
+        run: echo "::notice::No OPENROUTER_API_KEY configured, so the prose went unjudged."
+      - if: env.KEY != ''
+        uses: ./
+        with:
+          checks: 'rules'
+          api-key: ${{ secrets.OPENROUTER_API_KEY }}

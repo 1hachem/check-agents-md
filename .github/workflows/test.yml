@@ -1,0 +1,63 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm test
+
+  dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run build
+      - name: dist/ is in sync with src/
+        run: |
+          if ! git diff --exit-code --stat dist/; then
+            echo "::error::dist/ is stale. Run \`npm run build\` and commit the result."
+            exit 1
+          fi
+
+  self:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Own AGENTS.md resolves
+        uses: ./
+        with:
+          checks: 'refs'
+          all: 'true'
+
+      - name: A dead reference is caught
+        id: dead
+        run: |
+          mkdir -p fixture/dead
+          printf '# Dead\n\nThe `fixture/dead/gone.ts` file and `pnpm nope` are both gone.\n' > fixture/dead/AGENTS.md
+          git add -A
+          node dist/check-agents-md.cjs --checks refs --staged --no-fail-on-violations \
+            --no-annotations > refs.log 2>&1
+          cat refs.log
+          grep -q 'fixture/dead/gone.ts' refs.log || { echo "::error::the dead path went unreported"; exit 1; }
+          grep -q '2 dead references' refs.log || { echo "::error::expected 2 dead references"; exit 1; }
+          git restore --staged fixture
+          rm -rf fixture refs.log

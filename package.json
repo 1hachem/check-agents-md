@@ -1,0 +1,45 @@
+{
+	"name": "check-agents-md",
+	"version": "1.0.0",
+	"description": "Hold an AGENTS.md to rules that live: no implementation detail, no dead references.",
+	"keywords": [
+		"agents.md",
+		"agents",
+		"coding-agent",
+		"github-action",
+		"cli",
+		"lint",
+		"documentation"
+	],
+	"homepage": "https://github.com/1hachem/check-agents-md#readme",
+	"bugs": "https://github.com/1hachem/check-agents-md/issues",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/1hachem/check-agents-md.git"
+	},
+	"license": "MIT",
+	"author": "1hachem",
+	"type": "module",
+	"bin": {
+		"check-agents-md": "dist/check-agents-md.cjs"
+	},
+	"files": [
+		"dist",
+		"action.yml",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "esbuild src/check-agents-md.ts --bundle --platform=node --format=cjs --target=node20 --banner:js='#!/usr/bin/env node' --outfile=dist/check-agents-md.cjs && chmod +x dist/check-agents-md.cjs",
+		"test": "CHECK_AGENTS_MD_LIB=1 node --test test/*.test.ts",
+		"check": "node dist/check-agents-md.cjs",
+		"prepublishOnly": "npm run build && npm test"
+	},
+	"devDependencies": {
+		"esbuild": "^0.25.0",
+		"typescript": "^5.9.3"
+	}
+}
